@@ -69,6 +69,7 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 	for scn.Scan() {
 		data = append(data, scn.Text()+"\n")
 	}
+
 	_, Aok := table["-A"]
 	_, Bok := table["-B"]
 	_, Cok := table["-C"]
@@ -78,7 +79,7 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 			if _, ok := table["-F"]; ok {
 				if val[:len(val)-1] == templ {
 					if nok {
-						val = strconv.Itoa(i) + ")" + val
+						val = strconv.Itoa(i+1) + ")" + val
 					}
 					count++
 					res = append(res, val)
@@ -89,7 +90,7 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 			if _, ok := table["-i"]; ok {
 				if strings.Contains(strings.ToLower(val), strings.ToLower(templ)) {
 					if nok {
-						val = strconv.Itoa(i) + ")" + val
+						val = strconv.Itoa(i+1) + ")" + val
 					}
 					count++
 					res = append(res, val)
@@ -99,7 +100,7 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 			}
 			if strings.Contains(val, templ) {
 				if nok {
-					val = strconv.Itoa(i) + ")" + val
+					val = strconv.Itoa(i+1) + ")" + val
 				}
 				count++
 				res = append(res, val)
@@ -115,14 +116,16 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 					if _, ok := table["-F"]; ok {
 						if val == templ {
 							if nok {
-								val = strconv.Itoa(i) + ")" + val
+								val = strconv.Itoa(i+1) + ")" + val
 							}
 							count++
-							if len(data)-i < d {
+							if len(data) < d {
 								d = len(data) - i
+							} else {
+								d++
 							}
 							res = append(res, val)
-							res = append(res, data[i+1:i+1+d]...)
+							res = append(res, data[i+1:i+d]...)
 							continue
 						}
 					}
@@ -130,26 +133,30 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 						if strings.Contains(strings.ToLower(val), strings.ToLower(templ)) {
 							count++
 							if nok {
-								val = strconv.Itoa(i) + ")" + val
+								val = strconv.Itoa(i+1) + ")" + val
 							}
 							if len(data)-i < d {
 								d = len(data) - i
+							} else {
+								d++
 							}
 							res = append(res, val)
-							res = append(res, data[i+1:i+1+d]...)
+							res = append(res, data[i+1:i+d]...)
 							continue
 						}
 					}
 					if strings.Contains(val, templ) {
 						count++
 						if nok {
-							val = strconv.Itoa(i) + ")" + val
+							val = strconv.Itoa(i+1) + ")" + val
 						}
 						if len(data)-i < d {
 							d = len(data) - i
+						} else {
+							d++
 						}
 						res = append(res, val)
-						res = append(res, data[i+1:i+1+d]...)
+						res = append(res, data[i+1:i+d]...)
 
 					}
 				}
@@ -158,7 +165,7 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 					if _, ok := table["-F"]; ok {
 						if val == templ {
 							if nok {
-								val = strconv.Itoa(i) + ")" + val
+								val = strconv.Itoa(i+1) + ")" + val
 							}
 							count++
 							if i < d {
@@ -173,7 +180,7 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 						if strings.Contains(strings.ToLower(val), strings.ToLower(templ)) {
 							count++
 							if nok {
-								val = strconv.Itoa(i) + ")" + val
+								val = strconv.Itoa(i+1) + ")" + val
 							}
 							if i < d {
 								d = i
@@ -187,7 +194,7 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 					if strings.Contains(val, templ) {
 						count++
 						if nok {
-							val = strconv.Itoa(i) + ")" + val
+							val = strconv.Itoa(i+1) + ")" + val
 						}
 						if i < d {
 							d = i
@@ -203,7 +210,7 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 					if _, ok := table["-F"]; ok {
 						if val == templ {
 							if nok {
-								val = strconv.Itoa(i) + ")" + val
+								val = strconv.Itoa(i+1) + ")" + val
 							}
 							count++
 							if d > i {
@@ -211,10 +218,12 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 							}
 							if dpos > len(data)-i {
 								dpos = len(data) - i
+							} else {
+								dpos++
 							}
 							res = append(res, data[i-d:i]...)
 							res = append(res, val)
-							res = append(res, data[i+1:i+dpos+1]...)
+							res = append(res, data[i+1:i+dpos]...)
 							continue
 						}
 					}
@@ -222,34 +231,38 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 						if strings.Contains(strings.ToLower(val), strings.ToLower(templ)) {
 							count++
 							if nok {
-								val = strconv.Itoa(i) + ")" + val
+								val = strconv.Itoa(i+1) + ")" + val
 							}
 							if d > i {
 								d = i
 							}
 							if dpos > len(data)-i {
 								dpos = len(data) - i
+							} else {
+								dpos++
 							}
 							res = append(res, data[i-d:i]...)
 							res = append(res, val)
-							res = append(res, data[i+1:i+dpos+1]...)
+							res = append(res, data[i+1:i+dpos]...)
 							continue
 						}
 					}
 					if strings.Contains(val, templ) {
 						count++
 						if nok {
-							val = strconv.Itoa(i) + ")" + val
+							val = strconv.Itoa(i+1) + ")" + val
 						}
 						if d > i {
 							d = i
 						}
-						if dpos > len(data)-i {
+						if dpos >= len(data)-i {
 							dpos = len(data) - i
+						} else {
+							dpos++
 						}
 						res = append(res, data[i-d:i]...)
 						res = append(res, val)
-						res = append(res, data[i+1:i+dpos+1]...)
+						res = append(res, data[i+1:i+dpos]...)
 
 					}
 				}
