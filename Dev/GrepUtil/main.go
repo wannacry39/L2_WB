@@ -65,15 +65,86 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 	scn := bufio.NewScanner(r)
 	data := []string{}
 	res := []string{}
+	count := 0
 	for scn.Scan() {
 		data = append(data, scn.Text()+"\n")
 	}
+	_, Aok := table["-A"]
+	_, Bok := table["-B"]
+	_, Cok := table["-C"]
+	_, nok := table["-n"]
+	if !Aok && !Bok && !Cok {
+		for i, val := range data {
+			if _, ok := table["-F"]; ok {
+				if val[:len(val)-1] == templ {
+					if nok {
+						val = strconv.Itoa(i) + ")" + val
+					}
+					count++
+					res = append(res, val)
+
+				}
+				continue
+			}
+			if _, ok := table["-i"]; ok {
+				if strings.Contains(strings.ToLower(val), strings.ToLower(templ)) {
+					if nok {
+						val = strconv.Itoa(i) + ")" + val
+					}
+					count++
+					res = append(res, val)
+
+				}
+				continue
+			}
+			if strings.Contains(val, templ) {
+				if nok {
+					val = strconv.Itoa(i) + ")" + val
+				}
+				count++
+				res = append(res, val)
+			}
+		}
+	}
+
 	for i := 0; i < len(flags); i++ {
 		if d, err := strconv.Atoi(flags[i]); err == nil {
 			switch flags[i-1] {
 			case "-A":
 				for i, val := range data {
+					if _, ok := table["-F"]; ok {
+						if val == templ {
+							if nok {
+								val = strconv.Itoa(i) + ")" + val
+							}
+							count++
+							if len(data)-i < d {
+								d = len(data) - i
+							}
+							res = append(res, val)
+							res = append(res, data[i+1:i+1+d]...)
+							continue
+						}
+					}
+					if _, ok := table["-i"]; ok {
+						if strings.Contains(strings.ToLower(val), strings.ToLower(templ)) {
+							count++
+							if nok {
+								val = strconv.Itoa(i) + ")" + val
+							}
+							if len(data)-i < d {
+								d = len(data) - i
+							}
+							res = append(res, val)
+							res = append(res, data[i+1:i+1+d]...)
+							continue
+						}
+					}
 					if strings.Contains(val, templ) {
+						count++
+						if nok {
+							val = strconv.Itoa(i) + ")" + val
+						}
 						if len(data)-i < d {
 							d = len(data) - i
 						}
@@ -84,7 +155,40 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 				}
 			case "-B":
 				for i, val := range data {
+					if _, ok := table["-F"]; ok {
+						if val == templ {
+							if nok {
+								val = strconv.Itoa(i) + ")" + val
+							}
+							count++
+							if i < d {
+								d = i
+							}
+							res = append(res, data[i-d:i]...)
+							res = append(res, val)
+							continue
+						}
+					}
+					if _, ok := table["-i"]; ok {
+						if strings.Contains(strings.ToLower(val), strings.ToLower(templ)) {
+							count++
+							if nok {
+								val = strconv.Itoa(i) + ")" + val
+							}
+							if i < d {
+								d = i
+							}
+							res = append(res, data[i-d:i]...)
+							res = append(res, val)
+							continue
+						}
+					}
+
 					if strings.Contains(val, templ) {
+						count++
+						if nok {
+							val = strconv.Itoa(i) + ")" + val
+						}
 						if i < d {
 							d = i
 						}
@@ -94,16 +198,81 @@ func ScanFunc(r io.Reader, flags []string, templ string, table map[string]struct
 					}
 				}
 			case "-C":
+				dpos := d
 				for i, val := range data {
+					if _, ok := table["-F"]; ok {
+						if val == templ {
+							if nok {
+								val = strconv.Itoa(i) + ")" + val
+							}
+							count++
+							if d > i {
+								d = i
+							}
+							if dpos > len(data)-i {
+								dpos = len(data) - i
+							}
+							res = append(res, data[i-d:i]...)
+							res = append(res, val)
+							res = append(res, data[i+1:i+dpos+1]...)
+							continue
+						}
+					}
+					if _, ok := table["-i"]; ok {
+						if strings.Contains(strings.ToLower(val), strings.ToLower(templ)) {
+							count++
+							if nok {
+								val = strconv.Itoa(i) + ")" + val
+							}
+							if d > i {
+								d = i
+							}
+							if dpos > len(data)-i {
+								dpos = len(data) - i
+							}
+							res = append(res, data[i-d:i]...)
+							res = append(res, val)
+							res = append(res, data[i+1:i+dpos+1]...)
+							continue
+						}
+					}
 					if strings.Contains(val, templ) {
+						count++
+						if nok {
+							val = strconv.Itoa(i) + ")" + val
+						}
+						if d > i {
+							d = i
+						}
+						if dpos > len(data)-i {
+							dpos = len(data) - i
+						}
 						res = append(res, data[i-d:i]...)
 						res = append(res, val)
-						res = append(res, data[i+1:i+d+1]...)
+						res = append(res, data[i+1:i+dpos+1]...)
 
 					}
 				}
 			}
 		}
+
 	}
-	fmt.Print(res)
+	if _, ok := table["-c"]; ok {
+		defer fmt.Printf("Rows found: %d\n", count)
+	}
+	if _, ok := table["-v"]; ok {
+		bigString := strings.Join(res, "")
+		for _, val := range data {
+			if strings.Contains(bigString, val) {
+				continue
+			}
+			fmt.Print(val)
+		}
+		fmt.Println("Mod: Inverted")
+		return
+	}
+	for _, val := range res {
+		fmt.Print(val)
+	}
+
 }
