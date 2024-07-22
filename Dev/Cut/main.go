@@ -1,10 +1,10 @@
 package main
 
 import (
+	"Cututil/funcs"
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -13,27 +13,7 @@ func main() {
 	delimiter := "\t"
 	fields := []int{}
 	sflag := false
-	for i, val := range flags {
-		if val == "-d" {
-			delimiter = flags[i+1]
-		}
-		if val == "-f" {
-			if len(flags[i+1]) > 1 {
-				nums := strings.Split(flags[i+1], ",")
-				for _, val := range nums {
-					intval, _ := strconv.Atoi(val)
-					fields = append(fields, intval)
-				}
-			} else {
-				intval, _ := strconv.Atoi(flags[i+1])
-				fields = append(fields, intval)
-			}
-		}
-		if val == "-s" {
-			sflag = true
-		}
-
-	}
+	fields = funcs.InitArgs(flags, &delimiter, fields, &sflag)
 
 	scn := bufio.NewScanner(os.Stdin)
 	if sflag {
