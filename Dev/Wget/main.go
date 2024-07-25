@@ -71,4 +71,5 @@ func savePage(pageURL string, doc *goquery.Document) error {
 
 	fmt.Printf("Page saved: %s\n", pageURL)
 	return nil
+
 }
